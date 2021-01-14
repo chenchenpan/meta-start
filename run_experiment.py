@@ -172,16 +172,31 @@ class Dataset:
         self.cat_embeddings = cat_embeddings
 
     def sample_mini_dataset(self, n_example_per_class):
-        cats = list(self.cat_dict.keys())
-        selected_cat = np.random.choice(cats)
+        
+        all_cats = list(self.cat_dict.keys())
+        filtered_cats = []
+        for cat in all_cats:
+            all_ids = self.cat_dict[cat]
+            pos_ids = [x for x in all_ids if self.label_mat[x] == 1]
+            neg_ids = [x for x in all_ids if self.label_mat[x] == 0]
+            if len(pos_ids) >= n_example_per_class and len(neg_ids) >= n_example_per_class:
+                filtered_cats.append(cat)
+        
+#         cats = list(self.cat_dict.keys())
+        selected_cat = np.random.choice(filtered_cats)
+        
+        print('*'*20)
+        print(selected_cat)
+        print('*'*20)
+        
         all_ids = self.cat_dict[selected_cat]
         pos_ids = [x for x in all_ids if self.label_mat[x] == 1]
         neg_ids = [x for x in all_ids if self.label_mat[x] == 0]
-        if len(pos_ids) < n_example_per_class:
-            print(n_example_per_class)
-            print(pos_ids)
-        if len(neg_ids) < n_example_per_class:
-            print(neg_ids)
+#         if len(pos_ids) < n_example_per_class:
+#             print(n_example_per_class)
+#             print(pos_ids)
+#         if len(neg_ids) < n_example_per_class:
+#             print(neg_ids)
         selected_pos_ids = np.random.choice(pos_ids, n_example_per_class, replace=False)
         selected_neg_ids = np.random.choice(neg_ids, n_example_per_class, replace=False)
         pos_mat = self.data_mat[selected_pos_ids]

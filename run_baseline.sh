@@ -1,4 +1,4 @@
-DIR='/Users/crazydonkey/projects/meta-start/'
+DIR='/Users/cicipan/projects/meta-start-master/'
 N_SHOTS=2
 N_TOTAL=3
 NAME='baseline'

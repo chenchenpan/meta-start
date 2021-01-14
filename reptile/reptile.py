@@ -103,15 +103,31 @@ class Reptile:
         """
         train_set, test_set = _split_train_test(
             _sample_mini_dataset(dataset, num_shots+1))
+        
+#         print('*'*20)
+#         print(test_set)
+#         print('*'*20)
+        
         old_vars = self._full_state.export_variables()
         for batch in _mini_batches(train_set, inner_batch_size, inner_iters, replacement):
             inputs, labels = zip(*batch)
+       
             if self._pre_step_op:
                 self.session.run(self._pre_step_op)
             self.session.run(minimize_op, feed_dict={input_ph: inputs, label_ph: labels})
         test_preds = self._test_predictions(train_set, test_set, input_ph, predictions)
+        
+#         print('*'*20)
+#         print(test_preds)
+#         print('*'*20)
+        
         num_correct = sum([pred == sample[1] for pred, sample in zip(test_preds, test_set)])
         self._full_state.import_variables(old_vars)
+        
+        print('*'*20)
+        print(num_correct/2 * 100)
+        print('*'*20)
+        
         return num_correct
 
     def _test_predictions(self, train_set, test_set, input_ph, predictions):

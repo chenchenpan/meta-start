@@ -1,4 +1,4 @@
-DIR=$HOME'/projects/meta-start/'
+DIR=$HOME'/projects/meta-start-master/'
 N_SHOTS=4
 N_TOTAL=5
 NAME='reptile'
