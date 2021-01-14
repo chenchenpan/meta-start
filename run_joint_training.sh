@@ -1,4 +1,4 @@
-DIR='/Users/cicipan/projects/meta-start-master/'
+DIR=$HOME'/projects/meta-start/'
 N_SHOTS=4
 N_TOTAL=5
 NAME='joint'

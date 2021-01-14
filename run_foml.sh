@@ -1,4 +1,4 @@
-DIR='/Users/cicipan/projects/meta-start-master/'
+DIR=$HOME'/projects/meta-start/'
 N_SHOTS=2
 N_TOTAL=3
 NAME='foml'

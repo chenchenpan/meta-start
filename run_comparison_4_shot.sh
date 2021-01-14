@@ -1,4 +1,4 @@
-DIR=$HOME'/projects/meta-start-master/'
+DIR=$HOME'/projects/meta-start/'
 N_REPEATS=10
 N_SHOTS=4
 N_TOTAL=5
