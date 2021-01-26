@@ -138,21 +138,30 @@ def main():
                 meta_step_size_final=args.meta_step_size_final,
                 meta_batch_size=args.meta_batch_size,
                 inner_iters=args.inner_iters, num_shots=args.num_shots,
+                num_test_shots=args.num_test_shots,
                 num_train_shots=args.num_train_shots,
                 eval_interval=args.eval_interval, weight_decay_rate=args.weight_decay_rate)
+            print('num_test_shots: ' + args.num_test_shots)
+
             print('Evaluating...')
             train_acc = reptile.eval.evaluate(
                 sess, model, train_set, num_samples=args.num_eval_samples,
                 eval_inner_iters=args.eval_inner_iters, num_shots=args.num_shots,
+                num_test_shots=args.num_test_shots,
                 weight_decay_rate=args.weight_decay_rate)
+
+
+
             print('Train accuracy: ' + str(train_acc))
             test_acc = reptile.eval.evaluate(
                 sess, model, test_set, num_samples=args.num_eval_samples,
                 eval_inner_iters=args.eval_inner_iters, num_shots=args.num_shots,
+                num_test_shots=args.num_test_shots,
                 weight_decay_rate=args.weight_decay_rate)
             print('Test accuracy: ' + str(test_acc))
             train_accs.append(train_acc)
             test_accs.append(test_acc)
+            
 
     print('train accuracies: {}'.format(train_accs))
     print('test accuracies: {}'.format(test_accs))

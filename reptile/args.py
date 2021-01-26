@@ -27,6 +27,9 @@ def argument_parser():
     parser.add_argument('--num_repeats', help='number of repeats of experiments.', default=5, type=int)
     parser.add_argument('--seed', help='random seed', default=0, type=int)
     parser.add_argument('--num_shots', help='number of examples per class', default=5, type=int)
+
+    parser.add_argument('--num_test_shots', help='number of test per class', default=2, type=int)
+
     parser.add_argument('--num_train_shots', help='shots in a training batch', default=0, type=int)
     parser.add_argument('--inner_iters', help='inner iterations', default=20, type=int)
     parser.add_argument('--learning_rate', help='Adam step size', default=1e-3, type=float)

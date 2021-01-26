@@ -74,6 +74,7 @@ class Reptile:
                  minimize_op,
                  predictions,
                  num_shots,
+                 num_test_shots, # new added
                  inner_batch_size,
                  inner_iters,
                  replacement):
@@ -98,15 +99,22 @@ class Reptile:
           replacement: sample with replacement.
 
         Returns:
+
+          the acc of predicted 
           The number of correctly predicted samples.
             This always ranges from 0 to num_classes.
         """
         train_set, test_set = _split_train_test(
-            _sample_mini_dataset(dataset, num_shots+1))
+            _sample_mini_dataset(dataset, num_shots+num_test_shots), test_shots=num_test_shots) # can change the number of test_shots
         
-#         print('*'*20)
-#         print(test_set)
-#         print('*'*20)
+        m_dataset = _sample_mini_dataset(dataset, num_shots+num_test_shots)
+        print('*'*20)
+        print(m_dataset)
+        print(num_test_shots)
+        print(num_shots)
+        print(train_set)
+        print(test_set)
+        print('*'*20)
         
         old_vars = self._full_state.export_variables()
         for batch in _mini_batches(train_set, inner_batch_size, inner_iters, replacement):
@@ -124,8 +132,10 @@ class Reptile:
         num_correct = sum([pred == sample[1] for pred, sample in zip(test_preds, test_set)])
         self._full_state.import_variables(old_vars)
         
+        acc = num_correct/(2*num_test_shots) * 100
         print('*'*20)
-        print(num_correct/2 * 100)
+        print(num_test_shots)
+        print(acc)
         print('*'*20)
         
         return num_correct
