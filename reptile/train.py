@@ -61,16 +61,35 @@ def train(sess,
         if i % eval_interval == 0:
             accuracies = []
             for dataset, writer in [(train_set, train_writer), (test_set, test_writer)]:
-                total_correct = 0
-                for _ in range(num_eval_samples):
-                  correct = reptile.evaluate(dataset, model.input_ph, model.label_ph,
+                # total_acc = 0
+                # for _ in range(num_eval_samples):
+                #   # correct = reptile.evaluate(dataset, model.input_ph, model.label_ph,
+                #   #                            model.minimize_op, model.predictions,
+                #   #                            num_shots=num_shots,
+                #   #                            num_test_shots=num_test_shots,
+                #   #                            inner_batch_size=eval_inner_batch_size,
+                #   #                            inner_iters=eval_inner_iters, replacement=replacement)
+                #   # total_correct += correct
+
+                #   accuracy = reptile.evaluate(dataset, model.input_ph, model.label_ph,
+                #                              model.minimize_op, model.predictions,
+                #                              num_shots=num_shots,
+                #                              num_test_shots=num_test_shots,
+                #                              inner_batch_size=eval_inner_batch_size,
+                #                              inner_iters=eval_inner_iters, replacement=replacement)
+                #   total_acc += accuracy
+
+                # acc = float(total_correct) / (2 * num_eval_samples)
+
+                # acc = total_acc / num_eval_samples
+
+                acc, _ = reptile.evaluate(dataset, model.input_ph, model.label_ph,
                                              model.minimize_op, model.predictions,
                                              num_shots=num_shots,
                                              num_test_shots=num_test_shots,
                                              inner_batch_size=eval_inner_batch_size,
                                              inner_iters=eval_inner_iters, replacement=replacement)
-                  total_correct += correct
-                acc = float(total_correct) / (2 * num_eval_samples)
+
                 summary = sess.run(merged, feed_dict={
                     accuracy_ph: acc
                 })

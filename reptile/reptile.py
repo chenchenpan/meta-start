@@ -104,41 +104,73 @@ class Reptile:
           The number of correctly predicted samples.
             This always ranges from 0 to num_classes.
         """
-        train_set, test_set = _split_train_test(
-            _sample_mini_dataset(dataset, num_shots+num_test_shots), test_shots=num_test_shots) # can change the number of test_shots
+
+#         train_set, test_set = _split_train_test(
+#           _sample_mini_dataset(dataset, num_shots+num_test_shots), test_shots=num_test_shots) # can change the number of test_shots
         
-        m_dataset = _sample_mini_dataset(dataset, num_shots+num_test_shots)
-        print('*'*20)
-        print(m_dataset)
-        print(num_test_shots)
-        print(num_shots)
-        print(train_set)
-        print(test_set)
-        print('*'*20)
-        
-        old_vars = self._full_state.export_variables()
-        for batch in _mini_batches(train_set, inner_batch_size, inner_iters, replacement):
-            inputs, labels = zip(*batch)
+#         old_vars = self._full_state.export_variables()
+#         for batch in _mini_batches(train_set, inner_batch_size, inner_iters, replacement):
+#             inputs, labels = zip(*batch)
        
-            if self._pre_step_op:
-                self.session.run(self._pre_step_op)
-            self.session.run(minimize_op, feed_dict={input_ph: inputs, label_ph: labels})
-        test_preds = self._test_predictions(train_set, test_set, input_ph, predictions)
+#             if self._pre_step_op:
+#                 self.session.run(self._pre_step_op)
+#             self.session.run(minimize_op, feed_dict={input_ph: inputs, label_ph: labels})
+#         test_preds = self._test_predictions(train_set, test_set, input_ph, predictions)
         
-#         print('*'*20)
-#         print(test_preds)
-#         print('*'*20)
+#         num_correct = sum([pred == sample[1] for pred, sample in zip(test_preds, test_set)])
+#         self._full_state.import_variables(old_vars)
         
-        num_correct = sum([pred == sample[1] for pred, sample in zip(test_preds, test_set)])
-        self._full_state.import_variables(old_vars)
+#         acc = float(num_correct)/(2*num_test_shots) * 100
         
-        acc = num_correct/(2*num_test_shots) * 100
-        print('*'*20)
-        print(num_test_shots)
-        print(acc)
-        print('*'*20)
+#         return acc
+
+
+
+
+        all_mini_datasets, cat_list = _get_all_mini_dataset(dataset, num_shots+num_test_shots, return_all=True)
+
+        total_acc = 0
+        cat_acc_dict = {}
+        for minidataset, cat in zip(all_mini_datasets, cat_list):
+          train_set, test_set = _split_train_test(minidataset, num_shots, test_shots=num_test_shots) # can change the number of test_shots
+          
+          # m_dataset = _sample_mini_dataset(dataset, num_shots+num_test_shots)
+          # print('*'*20)
+          # print(m_dataset)
+          # print(num_test_shots)
+          # print(num_shots)
+          # print(train_set)
+          # print(test_set)
+          # print('*'*20)
+          
+          old_vars = self._full_state.export_variables()
+          for batch in _mini_batches(train_set, inner_batch_size, inner_iters, replacement):
+              inputs, labels = zip(*batch)
+         
+              if self._pre_step_op:
+                  self.session.run(self._pre_step_op)
+              self.session.run(minimize_op, feed_dict={input_ph: inputs, label_ph: labels})
+          test_preds = self._test_predictions(train_set, test_set, input_ph, predictions)
+          
+  #         print('*'*20)
+  #         print(test_preds)
+  #         print('*'*20)
+          
+          num_correct = sum([pred == sample[1] for pred, sample in zip(test_preds, test_set)])
+          self._full_state.import_variables(old_vars)
+          
+          acc = float(num_correct)/(2*num_test_shots) * 100
+          # print('*'*20)
+          # print(cat)
+          # print(acc)
+          # print('*'*20)
+
+          cat_acc_dict[cat] = acc
+
+          total_acc += acc / len(all_mini_datasets)
         
-        return num_correct
+        return total_acc, cat_acc_dict
+
 
     def _test_predictions(self, train_set, test_set, input_ph, predictions):
         res = []
@@ -209,18 +241,7 @@ class FOML(Reptile):
         update = average_vars(updates)
         self._model_state.import_variables(add_vars(old_vars, scale_vars(update, meta_step_size)))
 
-    def _mini_batches(self, mini_dataset, inner_batch_size, inner_iters, replacement):
-        """
-        Generate inner-loop mini-batches for the task.
-        """
-        if self.tail_shots is None:
-            for value in _mini_batches(mini_dataset, inner_batch_size, inner_iters, replacement):
-                yield value
-            return
-        train, tail = _split_train_test(mini_dataset, test_shots=self.tail_shots)
-        for batch in _mini_batches(train, inner_batch_size, inner_iters - 1, replacement):
-            yield batch
-        yield tail
+     
 
 
 def _sample_mini_dataset(dataset, num_shots):
@@ -231,6 +252,15 @@ def _sample_mini_dataset(dataset, num_shots):
       An iterable of (input, label) pairs.
     """
     return dataset.sample_mini_dataset(num_shots)
+
+def _get_all_mini_dataset(dataset, num_shots, return_all=False):
+    """
+    get all mini dataset that contain suficient examples
+
+    Returns:
+      An iterable of (input, label) pairs.
+    """
+    return dataset.get_all_mini_dataset(num_shots, return_all)
 
 
 def _mini_batches(samples, batch_size, num_batches, replacement):
@@ -244,14 +274,20 @@ def _mini_batches(samples, batch_size, num_batches, replacement):
         yield samples
 
 
-def _split_train_test(samples, test_shots=1):
+def _split_train_test(samples, num_shots, test_shots=1):
     samples_ = list(samples)
     # Split in a stratified way.
     pos_samples = [s for s in samples_ if s[-1] == 1.0]
     neg_samples = [s for s in samples_ if s[-1] == 0.0]
-    np.random.shuffle(pos_samples)
-    np.random.shuffle(neg_samples)
-    return (pos_samples[:-test_shots] + neg_samples[:-test_shots],
+    # np.random.shuffle(pos_samples)
+    # np.random.shuffle(neg_samples)
+
+    # print('*'*20)
+    # print(pos_samples)
+    # print(neg_samples)
+    # print('*'*20)
+
+    return (pos_samples[:num_shots] + neg_samples[:num_shots],
             pos_samples[-test_shots:] + neg_samples[-test_shots:])
 
 

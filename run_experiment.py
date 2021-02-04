@@ -109,6 +109,9 @@ def main():
 
     test_accs = []
     train_accs = []
+    train_cat_acc_dicts = []
+    test_cat_acc_dicts = []
+
     if args.foml:
         reptile_fn = partial(reptile.reptile.FOML, tail_shots=args.foml_tail)
     else:
@@ -141,19 +144,22 @@ def main():
                 num_test_shots=args.num_test_shots,
                 num_train_shots=args.num_train_shots,
                 eval_interval=args.eval_interval, weight_decay_rate=args.weight_decay_rate)
-            print('num_test_shots: ' + args.num_test_shots)
+            # print('num_test_shots: ' + args.num_test_shots)
 
             print('Evaluating...')
-            train_acc = reptile.eval.evaluate(
+            train_acc, train_cat_acc_dict = reptile.eval.evaluate(
                 sess, model, train_set, num_samples=args.num_eval_samples,
                 eval_inner_iters=args.eval_inner_iters, num_shots=args.num_shots,
                 num_test_shots=args.num_test_shots,
                 weight_decay_rate=args.weight_decay_rate)
-
-
-
             print('Train accuracy: ' + str(train_acc))
-            test_acc = reptile.eval.evaluate(
+
+            # print('fffffff')
+            # print('train_cat_acc_dict: {}'.format(train_cat_acc_dict))
+            # print('fffffff')
+
+
+            test_acc, test_cat_acc_dict = reptile.eval.evaluate(
                 sess, model, test_set, num_samples=args.num_eval_samples,
                 eval_inner_iters=args.eval_inner_iters, num_shots=args.num_shots,
                 num_test_shots=args.num_test_shots,
@@ -161,16 +167,58 @@ def main():
             print('Test accuracy: ' + str(test_acc))
             train_accs.append(train_acc)
             test_accs.append(test_acc)
-            
+            train_cat_acc_dicts.append(train_cat_acc_dict)
+            test_cat_acc_dicts.append(test_cat_acc_dict)
+
+            # print('fffffff')
+            # print('test_cat_acc_dicts: {}'.format(test_cat_acc_dicts))
+            # print('number of train cats: {}'.format(len(train_cat_acc_dicts)))
+            # print('number of test cats: {}'.format(len(test_cat_acc_dicts)))
+            # print('fffffff')
+
+
 
     print('train accuracies: {}'.format(train_accs))
     print('test accuracies: {}'.format(test_accs))
-    mean_train_acc = np.mean(train_accs) * 100
-    std_train_acc = np.std(train_accs) * 100
+    mean_train_acc = np.mean(train_accs) 
+    std_train_acc = np.std(train_accs)
     print('average train accuracy: {0:.5f}+-{1:.5f}%'.format(mean_train_acc, std_train_acc))
-    mean_test_acc = np.mean(test_accs) * 100
-    std_test_acc = np.std(test_accs) * 100
+    mean_test_acc = np.mean(test_accs)
+    std_test_acc = np.std(test_accs)
     print('average test accuracy: {0:.5f}+-{1:.5f}%'.format(mean_test_acc, std_test_acc))
+
+    def compute_cat_acc_stat(list_of_cat_acc_dict):
+        cat_acc_stat = {}
+        new_dict = {}
+        for old_dict in list_of_cat_acc_dict:
+            for k in old_dict.keys():
+                if k not in new_dict:
+                    new_dict[k] = [old_dict[k]]
+                else:
+                    new_dict[k].append(old_dict[k])
+
+        for cat, accs in new_dict.items():
+            mean_cat_acc = np.mean(accs)
+            std_cat_acc = np.std(accs)
+            cat_acc_stat[cat] = [mean_cat_acc, std_cat_acc]
+
+        return cat_acc_stat
+
+    train_cat_acc_stats = compute_cat_acc_stat(train_cat_acc_dicts)
+    test_cat_acc_stats = compute_cat_acc_stat(test_cat_acc_dicts)
+
+    # print('ooooooo')
+    # print('test_cat_acc_stats: {}'.format(test_cat_acc_stats))
+    # print('ooooooo')
+
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
+
+    with open(os.path.join(args.output_dir, 'train_cat_acc_{}shots.json'.format(args.num_shots)), 'w') as f: 
+        json.dump(train_cat_acc_stats, f, indent=2)
+
+    with open(os.path.join(args.output_dir, 'test_cat_acc_{}shots.json'.format(args.num_shots)), 'w') as f: 
+        json.dump(test_cat_acc_stats, f, indent=2)
 
 
 class Dataset:
@@ -192,11 +240,12 @@ class Dataset:
                 filtered_cats.append(cat)
         
 #         cats = list(self.cat_dict.keys())
+
         selected_cat = np.random.choice(filtered_cats)
         
-        print('*'*20)
-        print(selected_cat)
-        print('*'*20)
+        # print('*'*20)
+        # print(selected_cat)
+        # print('*'*20)
         
         all_ids = self.cat_dict[selected_cat]
         pos_ids = [x for x in all_ids if self.label_mat[x] == 1]
@@ -221,6 +270,62 @@ class Dataset:
                 [neg_mat, np.tile(cat_vec, [n_neg, 1])], axis=1)
         return (list(zip(pos_mat, self.label_mat[selected_pos_ids])) +
                 list(zip(neg_mat, self.label_mat[selected_neg_ids])))
+
+
+    def get_all_mini_dataset(self, n_example_per_class, return_all=False):
+        
+        all_cats = list(self.cat_dict.keys())
+        filtered_cats = []
+        for cat in all_cats:
+            all_ids = self.cat_dict[cat]
+            pos_ids = [x for x in all_ids if self.label_mat[x] == 1]
+            neg_ids = [x for x in all_ids if self.label_mat[x] == 0]
+            if len(pos_ids) >= n_example_per_class and len(neg_ids) >= n_example_per_class:
+                filtered_cats.append(cat)
+
+                # print('fffffff')
+                # print(cat)
+                # print('fffffff')
+        
+
+        # selected_cat = np.random.choice(filtered_cats)
+
+
+        all_mini_datasets = []
+
+        for selected_cat in filtered_cats:
+        
+            all_ids = self.cat_dict[selected_cat]
+            pos_ids = [x for x in all_ids if self.label_mat[x] == 1]
+            neg_ids = [x for x in all_ids if self.label_mat[x] == 0]
+
+            # print('*'*20)
+            # print(len(pos_ids))
+            # print(len(neg_ids))
+            # print('*'*20)
+
+            if return_all:
+                selected_pos_ids = pos_ids
+                selected_neg_ids = neg_ids
+            else:
+                selected_pos_ids = np.random.choice(pos_ids, n_example_per_class, replace=False)
+                selected_neg_ids = np.random.choice(neg_ids, n_example_per_class, replace=False)
+            pos_mat = self.data_mat[selected_pos_ids]
+            neg_mat = self.data_mat[selected_neg_ids]
+            if self.cat_embeddings:
+                n_pos = len(selected_pos_ids)
+                n_neg = len(selected_neg_ids)
+                embed_dim = self.cat_embeddings[selected_cat].shape[0]
+                cat_vec = np.reshape(self.cat_embeddings[selected_cat], (1, embed_dim))
+                pos_mat = np.concatenate(
+                    [pos_mat, np.tile(cat_vec, [n_pos, 1])], axis=1)
+                neg_mat = np.concatenate(
+                    [neg_mat, np.tile(cat_vec, [n_neg, 1])], axis=1)
+
+            all_mini_datasets.append(list(zip(pos_mat, self.label_mat[selected_pos_ids])) +
+                list(zip(neg_mat, self.label_mat[selected_neg_ids])))
+
+        return all_mini_datasets, filtered_cats
     
 
 if __name__ == '__main__':

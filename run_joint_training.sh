@@ -1,12 +1,14 @@
 DIR=$HOME'/projects/meta-start/'
-N_SHOTS=4
-N_TOTAL=5
+N_SHOTS=3
+N_TEST_SHOTS=3
+N_TOTAL=6
 NAME='joint'
 python run_experiment.py \
        --data_path=$DIR'data/preprocess_data/splitted_data_pos_'$N_TOTAL'.json' \
        --output_dir=$DIR'experiments/'$NAME \
        --seed=0 \
        --num_shots=$N_SHOTS \
+       --num_test_shots=$N_TEST_SHOTS \
        --num_train_shots=$N_SHOTS \
        --inner_iters=1 \
        --meta_step_size=0.5 \
