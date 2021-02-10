@@ -1,18 +1,18 @@
 DIR=$HOME'/projects/meta-start/'
-N_REPEATS=5
+N_REPEATS=10
 N_TEST_SHOTS=3
 N_TOTAL=6
 # N_SHOTS=2
 
-for j in 1 2; do
+for j in 2 3; do
        N_SHOTS=${j}
 
-       for i in 1 2 3 4 5 6; do
+       for i in 7; do
               N_LAYERS=${i}
               NAME='reptile'
               python run_experiment.py \
                      --data_path=$DIR'data/preprocess_data/splitted_data_pos_'$N_TOTAL'.json' \
-                     --output_dir=$DIR'experiments/'$NAME'inner_1_1' \
+                     --output_dir=$DIR'experiments/'$NAME'inner_1_1_lr0001' \
                      --num_repeats=$N_REPEATS \
                      --seed=0 \
                      --num_shots=$N_SHOTS \
@@ -21,7 +21,7 @@ for j in 1 2; do
                      --inner_iters=1 \
                      --meta_step_size=0.5 \
                      --meta_step_size_final=0.1 \
-                     --learning_rate=0.001 \
+                     --learning_rate=0.0001 \
                      --meta_batch_size=2 \
                      --meta_iters=1000 \
                      --eval_inner_iters=1 \
@@ -36,14 +36,15 @@ for j in 1 2; do
               NAME='foml'
               python run_experiment.py \
                      --data_path=$DIR'data/preprocess_data/splitted_data_pos_'$N_TOTAL'.json' \
-                     --output_dir=$DIR'experiments/'$NAME'inner_1_1' \
+                     --output_dir=$DIR'experiments/'$NAME'inner_1_1_lr0001' \
+                     --num_repeats=$N_REPEATS \
                      --seed=0 \
                      --num_shots=$N_SHOTS \
                      --num_train_shots=$N_SHOTS \
                      --inner_iters=1 \
                      --meta_step_size=0.5 \
                      --meta_step_size_final=0.1 \
-                     --learning_rate=0.001 \
+                     --learning_rate=0.0001 \
                      --meta_batch_size=2 \
                      --meta_iters=1000 \
                      --eval_inner_iters=1 \
@@ -60,7 +61,7 @@ for j in 1 2; do
               NAME='joint'
               python run_experiment.py \
                      --data_path=$DIR'data/preprocess_data/splitted_data_pos_'$N_TOTAL'.json' \
-                     --output_dir=$DIR'experiments/'$NAME \
+                     --output_dir=$DIR'experiments/'$NAME'_lr0001' \
                      --num_repeats=$N_REPEATS \
                      --seed=0 \
                      --num_shots=$N_SHOTS \
@@ -69,7 +70,7 @@ for j in 1 2; do
                      --inner_iters=1 \
                      --meta_step_size=0.5 \
                      --meta_step_size_final=0.1 \
-                     --learning_rate=0.001 \
+                     --learning_rate=0.0001 \
                      --meta_batch_size=2 \
                      --meta_iters=1000 \
                      --eval_inner_iters=0 \

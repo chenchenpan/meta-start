@@ -214,10 +214,10 @@ def main():
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    with open(os.path.join(args.output_dir, 'train_cat_acc_{}shots.json'.format(args.num_shots)), 'w') as f: 
+    with open(os.path.join(args.output_dir, 'train_cat_acc_{}shots_{}layers.json'.format(args.num_shots, args.n_layers)), 'w') as f: 
         json.dump(train_cat_acc_stats, f, indent=2)
 
-    with open(os.path.join(args.output_dir, 'test_cat_acc_{}shots.json'.format(args.num_shots)), 'w') as f: 
+    with open(os.path.join(args.output_dir, 'test_cat_acc_{}shots_{}layers.json'.format(args.num_shots, args.n_layers)), 'w') as f: 
         json.dump(test_cat_acc_stats, f, indent=2)
 
 
